@@ -45,7 +45,7 @@ export const errorHandler = (
   }
 
   // Erro de chave duplicada no MongoDB (ex: e-mail já cadastrado)
-  if ((error as NodeJS.ErrnoException).name === 'MongoServerError') {
+  if ((error as Error & { name: string }).name === 'MongoServerError') {
     const mongoError = error as Error & { code?: number; keyValue?: Record<string, unknown> };
     if (mongoError.code === 11000) {
       const field = Object.keys(mongoError.keyValue || {}).join(', ');
@@ -59,7 +59,7 @@ export const errorHandler = (
 
   // Erro de validação do Mongoose
   if (error instanceof mongoose.Error.ValidationError) {
-    const messages = Object.values(error.errors).map((e) => e.message).join(', ');
+    const messages = Object.values(error.errors).map((e) => (e as Error).message).join(', ');
     res.status(400).json({
       success: false,
       message: `Erro de validação: ${messages}`,

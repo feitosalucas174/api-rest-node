@@ -1,0 +1,55 @@
+version: '3.9'
+
+services:
+  # Serviço da aplicação Node.js
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: api-rest-node
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - MONGO_URI=mongodb://mongo:27017/api-rest
+      - JWT_SECRET=${JWT_SECRET:-default_secret_troque_em_producao}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-default_refresh_secret_troque_em_producao}
+      - JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN:-30d}
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - api-network
+    restart: unless-stopped
+
+  # Serviço do MongoDB
+  mongo:
+    image: mongo:7.0
+    container_name: api-rest-mongo
+    ports:
+      - '27017:27017'
+    volumes:
+      # Volume nomeado para persistir os dados do banco
+      - mongo-data:/data/db
+    networks:
+      - api-network
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+# Volume nomeado para os dados do MongoDB
+volumes:
+  mongo-data:
+    driver: local
+
+# Rede isolada para os serviços
+networks:
+  api-network:
+    driver: bridge

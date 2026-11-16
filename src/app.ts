@@ -12,6 +12,11 @@ import productRoutes from './routes/productRoutes';
 // Cria a instância principal do Express
 const app = express();
 
+// Render encaminha as requisições por um proxy reverso.
+// Confia somente no proxy diretamente anterior para identificar o IP real
+// sem permitir que o cliente escolha livremente X-Forwarded-For.
+app.set('trust proxy', 1);
+
 // ============================================================
 // Middlewares de segurança
 // ============================================================
